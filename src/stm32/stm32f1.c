@@ -19,6 +19,13 @@
 
 #define FREQ_PERIPH (CONFIG_CLOCK_FREQ / 2)
 
+#ifdef CONFIG_MACH_GD32F30x
+#define BIT(x)                       ((uint32_t)((uint32_t)0x01U<<(x)))
+#define BITS(start, end)             ((0xFFFFFFFFUL << (start)) & (0xFFFFFFFFUL >> (31U - (uint32_t)(end))))
+#define PWR_CR_LDOVS                 BITS(14,15)                   /*!< LDO output voltage select */
+#define PWR_CR_HDEN                  BIT(16)                       /*!< high-driver mode enable */
+#define PWR_CR_HDS                   BIT(17)                       /*!< high-driver mode switch */
+#endif
 // Map a peripheral address to its enable bits
 struct cline
 lookup_clock_line(uint32_t periph_base)
@@ -57,6 +64,29 @@ clock_setup(void)
 {
     // Configure and enable PLL
     uint32_t cfgr;
+
+    #ifdef CONFIG_MACH_GD32F30x
+    /* enable the high-drive to extend the clock frequency to 120 MHz */
+    RCC->CR |= RCC_CR_HSEON;
+    if (CONFIG_CLOCK_FREQ > 108000000U) {
+        RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+        PWR->CR |=  PWR_CR_LDOVS | PWR_CR_HDS |PWR_CR_HDEN;
+        while(!(PWR->CSR & (PWR_CR_HDEN | PWR_CR_HDS)))
+        ;
+    }
+    #ifdef CONFIG_MACH_GD32F30X_HD
+    uint32_t div = CONFIG_CLOCK_FREQ / (CONFIG_CLOCK_REF_FREQ / 2);
+    
+    cfgr= (RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE);
+    if (div > 16){
+        cfgr |= BIT(27);
+        div -=15;
+    }
+    
+    cfgr |= RCC_CFGR_PLLMULL_Msk & ((div - 2) << RCC_CFGR_PLLMULL_Pos);
+    #endif
+
+#else
     if (!CONFIG_STM32_CLOCK_REF_INTERNAL) {
         // Configure 72Mhz PLL from external crystal (HSE)
         RCC->CR |= RCC_CR_HSEON;
@@ -73,12 +103,13 @@ clock_setup(void)
         cfgr = ((0 << RCC_CFGR_PLLSRC_Pos)
                 | ((div2 - 2) << RCC_CFGR_PLLMULL_Pos));
     }
+#endif
     cfgr |= RCC_CFGR_PPRE1_DIV2 | RCC_CFGR_PPRE2_DIV2 | RCC_CFGR_ADCPRE_DIV8;
     RCC->CFGR = cfgr;
     RCC->CR |= RCC_CR_PLLON;
 
     // Set flash latency
-    FLASH->ACR = (2 << FLASH_ACR_LATENCY_Pos) | FLASH_ACR_PRFTBE;
+    FLASH->ACR = FLASH_ACR_PRFTBE | ((CONFIG_CLOCK_FREQ > 72000000U)? FLASH_ACR_LATENCY_2 : FLASH_ACR_LATENCY_1);
 
     // Wait for PLL lock
     while (!(RCC->CR & RCC_CR_PLLRDY))

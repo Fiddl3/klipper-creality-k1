@@ -20,6 +20,8 @@ choice
         bool "LPC176x"
     config MACH_STM32
         bool "STMicroelectronics STM32"
+    config MACH_GD32
+        bool "GigaDevice GD32 (STM32 Clones)"
     config MACH_HC32F460
         bool "Huada Semiconductor HC32F460"
     config MACH_RPXXXX

@@ -56,7 +56,7 @@ static const uint8_t adc_pins[] = {
 static void
 adc_calibrate(ADC_TypeDef *adc)
 {
-#if CONFIG_MACH_STM32F1
+#if CONFIG_MACH_STM32F1 && !CONFIG_MACH_GD32F30x
     adc->CR2 = ADC_CR2_ADON;
     udelay(10);
     adc->CR2 = ADC_CR2_ADON | ADC_CR2_RSTCAL;
@@ -96,7 +96,8 @@ gpio_adc_setup(uint32_t pin)
     if (!is_enabled_pclock(adc_base)) {
         enable_pclock(adc_base);
         adc_calibrate(adc);
-        uint32_t aticks = 4; // 4-12us sample time (depending on stm32 chip)
+         // 4-12us sample time (depending on stm32 chip)
+        uint32_t aticks = CONFIG_MACH_GD32F30x ? 5 : 4; 
         adc->SMPR1 = (aticks | (aticks << 3) | (aticks << 6) | (aticks << 9)
                       | (aticks << 12) | (aticks << 15) | (aticks << 18)
                       | (aticks << 21)
