@@ -12,8 +12,13 @@
 #include "board/pgm.h" // READP
 #include "command.h" // output_P
 #include "sched.h" // sched_is_shutdown
+#include "autoconf.h" // CONFIG_CK1BOOT
 
 static uint8_t next_sequence = MESSAGE_DEST;
+
+#if CONFIG_CK1BOOT
+    static const char software_version[32] __attribute__ ((section("SV_SECTION"))) __attribute__((used)) = "kpr" GIT_VERSION;
+#endif
 
 static uint32_t
 command_encode_ptr(void *p)

@@ -4,7 +4,7 @@
 //
 // This file may be distributed under the terms of the GNU GPLv3 license.
 
-#include "autoconf.h" // CONFIG_FLASH_APPLICATION_ADDRESS
+#include "autoconf.h" // CONFIG_FLASH_APPLICATION_ADDRESS & CONFIG_CK1BOOT
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-littlearm", "elf32-littlearm")
 OUTPUT_ARCH(arm)
@@ -22,6 +22,10 @@ SECTIONS
         _text_vectortable_start = .;
         KEEP(*(.vector_table))
         _text_vectortable_end = .;
+#if CONFIG_CK1BOOT
+        . = _text_vectortable_start + 0x200;
+        KEEP(*(SV_SECTION))
+#endif
         *(.text .text.*)
         *(.rodata .rodata*)
     } > rom

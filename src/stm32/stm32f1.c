@@ -240,6 +240,14 @@ usb_stm32duino_bootloader(void)
     NVIC_SystemReset();
 }
 
+// Reboot into Creality K1 bootloader (just restart)
+static void
+creality_k1_bootloader(void)
+{
+    irq_disable();
+    NVIC_SystemReset();
+}
+
 // Handle reboot requests
 void
 bootloader_request(void)
@@ -249,6 +257,8 @@ bootloader_request(void)
         usb_hid_bootloader();
     else if (CONFIG_STM32_FLASH_START_2000)
         usb_stm32duino_bootloader();
+    else if(CONFIG_CK1BOOT && CONFIG_STM32_FLASH_START_3000)
+        creality_k1_bootloader();
 }
 
 
