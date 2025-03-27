@@ -100,10 +100,13 @@ src-$(CONFIG_HAVE_GPIO_HARD_PWM) += stm32/hard_pwm.c
 # Binary output file rules
 target-y += $(OUT)klipper.bin
 
-$(OUT)klipper.bin: $(OUT)klipper.elf
+$(OUT)klipper.bin: $(OUT)klipper.elf $(if $(CONFIG_CK1BOOT),$(OUT)hostCrc16.elf)
 	@echo "  Creating hex file $@"
 	$(Q)$(OBJCOPY) -O binary $< $@
-
+ifdef CONFIG_CK1BOOT	
+	$(Q)$(OUT)hostCrc16.elf $@
+	$(Q)srec_cat $@ -binary -offset $(CONFIG_FLASH_APPLICATION_ADDRESS) -o $(OUT)klipper.hex -intel 
+endif
 # Flash rules
 lib/hidflash/hid-flash:
 	@echo "  Building hid-flash"

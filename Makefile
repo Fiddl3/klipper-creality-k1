@@ -72,7 +72,12 @@ $(OUT)klipper.elf: $(OBJS_klipper.elf)
 	@echo "  Linking $@"
 	$(Q)$(CC) $(OBJS_klipper.elf) $(CFLAGS_klipper.elf) -o $@
 	$(Q)scripts/check-gcc.sh $@ $(OUT)compile_time_request.o
-
+	
+ifdef CONFIG_CK1BOOT
+$(OUT)hostCrc16.elf: src/host_crc16.c
+	@echo "  Compiling and Linking $@"
+	$(Q)gcc $< -o $@
+endif
 ################ Compile time requests
 
 $(OUT)%.o.ctr: $(OUT)%.o
